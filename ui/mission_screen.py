@@ -28,7 +28,7 @@ class MissionScreen(sprout.Screen):
         self.sort_tasks_button.place(630, 30)
 
         self.change_players_button = sprout.TextLabel(self, "(change players)")
-        self.change_players_button.place(1170, 30, anchor=tkinter.NE)
+        self.change_players_button.place(1170, 30, anchor=sprout.NE)
 
         self.task_widgets: list[TaskWidget] = []
 
@@ -38,9 +38,9 @@ class MissionScreen(sprout.Screen):
         self.add_special_button.command = self.add_special
         self.sort_tasks_button.command = self.sort_tasks
 
-    def _update(self):
+    def update(self):
         for task_widget in self.task_widgets:
-            task_widget.base.destroy()
+            task_widget.destroy()
         self.task_widgets.clear()
 
         self.task_widgets.extend(TaskWidget(self, task) for task in self.mission.tasks)
@@ -50,32 +50,32 @@ class MissionScreen(sprout.Screen):
             column = i % 3
             task_widget.place(x=30 + column * 360, y=90 + row * 135)
 
-    def reset(self):
+    def reset(self, widget: sprout.TextLabel | None = None):
         self.mission.reset()
-        self._update()
+        self.update()
 
-    def add_single(self):
+    def add_single(self, widget: sprout.TextLabel):
         self.mission.add_task(1)
-        self._update()
+        self.update()
 
-    def add_double(self):
+    def add_double(self, widget: sprout.TextLabel):
         self.mission.add_task(2)
-        self._update()
+        self.update()
 
-    def add_special(self):
+    def add_special(self, widget: sprout.TextLabel):
         self.mission.add_special_task()
-        self._update()
+        self.update()
 
-    def sort_tasks(self):
+    def sort_tasks(self, widget: sprout.TextLabel):
         self.mission.tasks.sort()
-        self._update()
+        self.update()
 
     def cycle_assignee(self, widget: "AssigneeWidget"):
         index = self.mission.players.index(widget.task.assignee)
         index += 1
         index %= len(self.mission.players)
         widget.task.assignee = self.mission.players[index]
-        widget.image = tkinter.PhotoImage(file=widget.task.assignee.name).subsample(2)
+        widget.image = sprout.Image.from_file(widget.task.assignee.name).subsample(2)
 
 
 class TaskWidget(sprout.Frame):
@@ -97,12 +97,9 @@ class AssigneeWidget(sprout.ImageLabel):
     def __init__(self, parent: sprout.Container, task: Task):
         super().__init__(
             parent,
-            tkinter.PhotoImage(file=task.assignee.name).subsample(2),
+            sprout.Image.from_file(task.assignee.name).subsample(2),
         )
         self.task = task
-
-    def parameters(self):
-        return [self]
 
 
 class CardWidget(sprout.TextLabel):
@@ -112,19 +109,19 @@ class CardWidget(sprout.TextLabel):
         self.card = card
 
         if self.card.done:
+            self.colour = "#4f4f4f"
             self.font = sprout.Font("Sans Serif", 72, strikethrough=True)
-            self.label.config(fg="#4f4f4f")
         else:
+            self.colour = self.card.suit.colour
             self.font = sprout.Font("Sans Serif", 72, strikethrough=False)
-            self.label.config(fg=self.card.suit.colour)
 
         self.command = self.toggle_card
 
-    def toggle_card(self):
+    def toggle_card(self, widget: "CardWidget"):
         self.card.done = not self.card.done
         if self.card.done:
+            self.colour = "#4f4f4f"
             self.font = sprout.Font("Sans Serif", 72, strikethrough=True)
-            self.label.config(fg="#4f4f4f")
         else:
+            self.colour = self.card.suit.colour
             self.font = sprout.Font("Sans Serif", 72, strikethrough=False)
-            self.label.config(fg=self.card.suit.colour)

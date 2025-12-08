@@ -1,9 +1,21 @@
-# Sprout v0.1 https://github.com/Qzphs/sprout
+# Sprout v0.2 https://github.com/Qzphs/sprout
 
 
+import tkinter
 import tkinter.font
 from typing import Callable
-import tkinter
+
+
+NW = tkinter.NW
+N = tkinter.N
+NE = tkinter.NE
+E = tkinter.E
+SE = tkinter.SE
+S = tkinter.S
+SW = tkinter.SW
+W = tkinter.W
+
+CENTRE = tkinter.CENTER
 
 
 class Font:
@@ -36,6 +48,27 @@ class Font:
         )
 
 
+class Image:
+
+    def __init__(self, base: tkinter.PhotoImage):
+        self.base = base
+
+    @classmethod
+    def from_file(cls, filename: str):
+        return Image(tkinter.PhotoImage(file=filename))
+
+    def subsample(self, x: int, y: int | None = None):
+        if y is None:
+            y = x
+        return Image(self.base.subsample(x=x, y=y))
+
+    def zoom(self, x: int, y: int | None = None):
+        if y is None:
+            y = x
+        return Image(self.base.zoom(x=x, y=y))
+
+
+
 class Widget:
     """Base class for Sprout widgets."""
 
@@ -49,8 +82,11 @@ class Widget:
         supported by Sprout.
         """
 
-    def place(self, x: int, y: int, anchor: str = tkinter.NW):
+    def place(self, x: int, y: int, anchor: str = NW):
         self.base.place(x=x, y=y, anchor=anchor)
+
+    def destroy(self):
+        self.base.destroy()
 
 
 class Container(Widget):
@@ -109,15 +145,15 @@ class Dropdown(Widget):
     def __init__(self, parent: Container, options: list[str]):
         super().__init__(parent)
         assert len(options) > 0
-        self.variable = tkinter.StringVar(self.base)
-        self.variable.set(options[0])
+        self._variable = tkinter.StringVar(self.base)
+        self._variable.set(options[0])
         self.options = options
-        self.dropdown = tkinter.OptionMenu(self.base, self.variable, *options)
-        self.dropdown.pack()
+        self._dropdown = tkinter.OptionMenu(self.base, self._variable, *options)
+        self._dropdown.pack()
 
     @property
     def value(self):
-        return self.variable.get()
+        return self._variable.get()
 
 
 
@@ -126,13 +162,13 @@ class Entry(Widget):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.variable = tkinter.StringVar(self.base)
-        self.entry = tkinter.Entry(self.base, textvariable=self.variable)
-        self.entry.pack()
+        self._variable = tkinter.StringVar(self.base)
+        self._entry = tkinter.Entry(self.base, textvariable=self._variable)
+        self._entry.pack()
 
     @property
     def value(self):
-        return self.entry.get()
+        return self._entry.get()
 
 
 class Frame(Container):
@@ -147,37 +183,26 @@ class Frame(Container):
 class ImageLabel(Widget):
     """Same as tkinter.Label, but always has an image."""
 
-    def __init__(self, parent: Container, image: tkinter.PhotoImage):
+    def __init__(self, parent: Container, image: Image):
         super().__init__(parent)
-        self.label = tkinter.Label(self.base, image=image)
+        self._label = tkinter.Label(self.base, image=image.base)
         self._image = image
-        self.label.bind("<Button-1>", self._on_click)
-        self.label.pack()
-        self.command: Callable | None = None
+        self._label.bind("<Button-1>", self._on_click)
+        self._label.pack()
+        self.command: Callable[[Widget], None] | None = None
 
     def _on_click(self, event: tkinter.Event):
         if self.command is None:
             return
-        self.command(*self.parameters())
-
-    def parameters(self) -> list:
-        """
-        Return a list of parameters this widget should use.
-
-        When the widget is clicked, this method is called to get a list of
-        parameters, which are then passed into self.command().
-
-        Subclasses should override this.
-        """
-        return []
+        self.command(self)
 
     @property
-    def image(self) -> tkinter.PhotoImage:
+    def image(self):
         return self._image
 
     @image.setter
-    def image(self, image: tkinter.PhotoImage):
-        self.label.config(image=image)
+    def image(self, image: Image):
+        self._label.config(image=image.base)
         self._image = image
 
 
@@ -199,34 +224,34 @@ class ScrollableFrame(Container):
 
         super().__init__(parent)
 
-        self.scrollbar = tkinter.Scrollbar(
+        self._scrollbar = tkinter.Scrollbar(
             self.base,
             orient=tkinter.VERTICAL,
         )
-        self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+        self._scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
 
-        self.canvas = tkinter.Canvas(
+        self._canvas = tkinter.Canvas(
             self.base,
             bd=0,
             highlightthickness=0,
             width=outer_width,
             height=outer_height,
             scrollregion=(0, 0, inner_width, inner_height),
-            yscrollcommand=self.scrollbar.set,
+            yscrollcommand=self._scrollbar.set,
         )
-        self.canvas.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
-        self.scrollbar.config(command=self.canvas.yview)
+        self._canvas.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
+        self._scrollbar.config(command=self._canvas.yview)
 
         self.frame = tkinter.Frame(
-            self.canvas,
+            self._canvas,
             width=inner_width,
             height=inner_height,
         )
         self.frame.pack(fill=tkinter.BOTH)
-        self.canvas.create_window(
+        self._canvas.create_window(
             0,
             0,
-            anchor=tkinter.NW,
+            anchor=NW,
             width=inner_width,
             height=inner_height,
             window=self.frame,
@@ -239,40 +264,37 @@ class TextLabel(Widget):
 
     def __init__(self, parent: Container, text: str):
         super().__init__(parent)
-        self.label = tkinter.Label(self.base, text=text)
-        self.label.bind("<Button-1>", self._on_click)
-        self.label.pack()
-        self.command: Callable | None = None
+        self._label = tkinter.Label(self.base, text=text)
+        self._label.bind("<Button-1>", self._on_click)
+        self._label.pack()
+        self.command: Callable[[Widget], None] | None = None
 
     def _on_click(self, event: tkinter.Event):
         if self.command is None:
             return
-        self.command(*self.parameters())
-
-    def parameters(self) -> list:
-        """
-        Return a list of parameters this widget should use.
-
-        When the widget is clicked, this method is called to get a list of
-        parameters, which are then passed into self.command().
-
-        Subclasses should override this.
-        """
-        return []
+        self.command(self)
 
     @property
     def text(self) -> str:
-        return self.label.cget("text")
+        return self._label.cget("text")
 
     @text.setter
     def text(self, text: str):
-        self.label.config(text=text)
+        self._label.config(text=text)
 
     @property
     def font(self):
         # TODO: return a sprout.Font instead of str
-        return self.label.cget("font")
+        return self._label.cget("font")
 
     @font.setter
     def font(self, font: Font):
-        self.label.config(font=font.tkinter())
+        self._label.config(font=font.tkinter())
+
+    @property
+    def colour(self):
+        return self._label.cget("fg")
+
+    @colour.setter
+    def colour(self, colour: str):
+        self._label.config(fg=colour)
