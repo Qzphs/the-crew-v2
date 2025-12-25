@@ -24,8 +24,7 @@ class Application(sprout.Application):
         for i, player in enumerate(self.mission.players):
             player.index = i
         BLANK_PLAYER.index = 99
-        self.mission.reset()
-        self.mission_screen.update()
+        self.mission_screen.reset()
         self.change_screen(self.mission_screen)
 
     def change_players(self, source: sprout.TextLabel):

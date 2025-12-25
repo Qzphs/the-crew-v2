@@ -22,9 +22,3 @@ class Mission:
 
     def add_special_task(self):
         self.tasks.append(Task([Card.special()]))
-
-    def swap_tasks(self, task1: Task, task2: Task):
-        index1 = self.tasks.index(task1)
-        index2 = self.tasks.index(task2)
-        self.tasks[index1] = task2
-        self.tasks[index2] = task1

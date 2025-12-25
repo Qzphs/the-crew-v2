@@ -11,7 +11,7 @@ class MissionScreen(sprout.Screen):
         self.mission = mission
 
         self.rearrange_mode = False
-        self.selected_task: Task | None = None
+        self.selected_task_widget: TaskWidget | None = None
 
         self.reset_button = sprout.TextLabel(self, "(reset)")
         self.reset_button.command = self.reset
@@ -37,74 +37,96 @@ class MissionScreen(sprout.Screen):
         # Command to be set by application
         self.change_players_button.place(1230, 30, anchor=sprout.NE)
 
-        self.task_widgets: list[TaskWidget] = []
+        MAX_TASK_COUNT = 15
+        self.task_widgets = [TaskWidget(self) for _ in range(MAX_TASK_COUNT)]
+        for i, task_widget in enumerate(self.task_widgets):
+            row = i // 3
+            column = i % 3
+            task_widget.place(x=30 + column * 400, y=90 + row * 135)
 
         for widget in self.children:
             if not isinstance(widget, sprout.TextLabel):
                 continue
             widget.font = sprout.Font("Sans Serif", 15)
 
-    def update(self):
-        for task_widget in self.task_widgets:
-            task_widget.destroy()
-        self.task_widgets.clear()
-        self.task_widgets.extend(TaskWidget(self, task) for task in self.mission.tasks)
-
-        self._update_task_borders()
-        self._update_task_commands()
-        for i, task_widget in enumerate(self.task_widgets):
-            row = i // 3
-            column = i % 3
-            task_widget.place(x=30 + column * 400, y=90 + row * 135)
-
-    def _update_task_borders(self):
+    def _update(self):
         if self.rearrange_mode:
             self.rearrange_tasks_button.colour = "#f18519"
-            for widget in self.task_widgets:
-                if widget.task == self.selected_task:
-                    widget.mark_selected()
-                else:
-                    widget.mark_available()
         else:
             self.rearrange_tasks_button.colour = "#ffffff"
-            for widget in self.task_widgets:
-                widget.hide_border()
+        for task_widget in self.task_widgets:
+            self._update_border(task_widget)
+            self._update_commands(task_widget)
 
-    def _update_task_commands(self):
-        if self.rearrange_mode:
-            for widget in self.task_widgets:
-                widget.content.command = self.select_task
-                widget.assignee_icon.command = self.select_task
-                for card_widget in widget.card_widgets:
-                    card_widget.command = self.select_task
+    def _update_border(self, task_widget: "TaskWidget"):
+        if not self.rearrange_mode:
+            task_widget.border_colour = None
+        elif task_widget == self.selected_task_widget:
+            task_widget.border_colour = "#f18519"
         else:
-            for widget in self.task_widgets:
-                widget.content.command = None
-                widget.assignee_icon.command = self.cycle_assignee
-                for card_widget in widget.card_widgets:
-                    card_widget.command = card_widget.toggle_card
+            task_widget.border_colour = "#d1d1d1"
+
+    def _update_commands(self, task_widget: "TaskWidget"):
+        if not self.rearrange_mode:
+            task_widget.inner1.command = None
+            task_widget.inner2.command = None
+            if task_widget.assignee_icon is not None:
+                task_widget.assignee_icon.command = self.cycle_assignee
+            for card_widget in task_widget.card_widgets:
+                card_widget.command = card_widget.toggle_card
+        else:
+            task_widget.inner1.command = self.select_task
+            task_widget.inner2.command = self.select_task
+            if task_widget.assignee_icon is not None:
+                task_widget.assignee_icon.command = self.select_task
+            for card_widget in task_widget.card_widgets:
+                card_widget.command = self.select_task
 
     def reset(self, source: sprout.TextLabel | None = None):
         self.mission.reset()
-        self.update()
+        self.rearrange_mode = False
+        self.selected_task_widget = None
+        for task_widget in self.task_widgets:
+            task_widget.task = None
+        self._update()
 
     def add_single(self, source: sprout.TextLabel):
+        task_widget = next(
+            (widget for widget in self.task_widgets if widget.task is None), None
+        )
+        if task_widget is None:
+            return
         self.mission.add_task(1)
-        self.update()
+        task_widget.task = self.mission.tasks[-1]
+        self._update_border(task_widget)
+        self._update_commands(task_widget)
 
     def add_double(self, source: sprout.TextLabel):
+        task_widget = next(
+            (widget for widget in self.task_widgets if widget.task is None), None
+        )
+        if task_widget is None:
+            return
         self.mission.add_task(2)
-        self.update()
+        task_widget.task = self.mission.tasks[-1]
+        self._update_border(task_widget)
+        self._update_commands(task_widget)
 
     def add_special(self, source: sprout.TextLabel):
+        task_widget = next(
+            (widget for widget in self.task_widgets if widget.task is None), None
+        )
+        if task_widget is None:
+            return
         self.mission.add_special_task()
-        self.update()
+        task_widget.task = self.mission.tasks[-1]
+        self._update_border(task_widget)
+        self._update_commands(task_widget)
 
     def rearrange_tasks(self, source: sprout.TextLabel):
         self.rearrange_mode = not self.rearrange_mode
-        self.selected_task = None
-        self._update_task_borders()
-        self._update_task_commands()
+        self.selected_task_widget = None
+        self._update()
 
     def select_task(self, source: sprout.Widget):
         """
@@ -118,12 +140,21 @@ class MissionScreen(sprout.Screen):
             source = source.parent
         assert isinstance(source, TaskWidget)
 
-        if self.selected_task is None:
-            self.selected_task = source.task
+        if self.selected_task_widget is None:
+            self.selected_task_widget = source
+            self._update_border(source)
         else:
-            self.mission.swap_tasks(self.selected_task, source.task)
-            self.selected_task = None
-        self.update()
+            widget1 = self.selected_task_widget
+            widget2 = source
+            task1 = widget1.task
+            task2 = widget2.task
+            widget1.task = task2
+            widget2.task = task1
+            self.selected_task_widget = None
+            self._update_border(widget1)
+            self._update_commands(widget1)
+            self._update_border(widget2)
+            self._update_commands(widget2)
 
     def cycle_assignee(self, source: "AssigneeWidget"):
         index = self.mission.players.index(source.task.assignee)
@@ -135,19 +166,37 @@ class MissionScreen(sprout.Screen):
 
 class TaskWidget(sprout.Frame):
 
-    def __init__(self, parent: sprout.Container, task: Task):
-        super().__init__(parent, 0, 0)
-        self.task = task
+    def __init__(self, parent: sprout.Container):
+        super().__init__(parent, 360, 120)
+        self._task: Task | None = None
         self.border_width = 5
 
         # So that border displays correctly
-        self.content = sprout.Frame(self, 0, 0)
-        self.content.pack()
+        self.inner1 = sprout.Frame(self, 350, 110)
+        self.inner1.place(0, 0)
 
-        self.assignee_icon = AssigneeWidget(self.content, task)
+        self.inner2 = sprout.Frame(self.inner1, 0, 0)
+        self.inner2.place(0, 0)
+
+        self.assignee_icon: AssigneeWidget | None = None
+        self.card_widgets: list[CardWidget] = []
+
+    @property
+    def task(self):
+        return self._task
+
+    @task.setter
+    def task(self, task: Task | None):
+        self._task = task
+        for widget in list(self.inner2.children):
+            widget.destroy()
+        self.assignee_icon = None
+        self.card_widgets.clear()
+        if task is None:
+            return
+        self.assignee_icon = AssigneeWidget(self.inner2, task)
         self.assignee_icon.pack()
-
-        self.card_widgets = [CardWidget(self.content, card) for card in task.cards]
+        self.card_widgets.extend(CardWidget(self.inner2, card) for card in task.cards)
         for card_widget in self.card_widgets:
             card_widget.pack()
 
