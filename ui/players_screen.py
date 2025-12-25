@@ -30,15 +30,15 @@ class PlayersScreen(sprout.Screen):
         for player_widget in self.player_widgets:
             player_widget.command = self.select_player
 
-    def select_player(self, widget: "PlayerWidget"):
-        player = widget.player
+    def select_player(self, source: "PlayerWidget"):
+        player = source.player
         if player in self.mission.players:
             self.mission.players.remove(player)
-            widget.hide_border()
+            source.hide_border()
         else:
             player.index = len(self.mission.players)
             self.mission.players.append(player)
-            widget.show_border()
+            source.show_border()
 
 
 class PlayerWidget(sprout.ImageLabel):
@@ -46,11 +46,10 @@ class PlayerWidget(sprout.ImageLabel):
     def __init__(self, parent: sprout.Container, player: Player):
         super().__init__(parent, sprout.Image.from_file(player.name))
         self.player = player
-
-        self.base.config(bd=5)
+        self.border_width = 5
 
     def show_border(self):
-        self.base.config(bg="#f18519")
+        self.border_colour = "#f18519"
 
     def hide_border(self):
-        self.base.config(bg=self.parent.base.cget("bg"))
+        self.border_colour = None
