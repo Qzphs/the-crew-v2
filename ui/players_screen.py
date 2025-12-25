@@ -4,7 +4,7 @@ from game.players import PLAYERS
 import sprout
 
 
-class PlayerScreen(sprout.Screen):
+class PlayersScreen(sprout.Screen):
 
     def __init__(self, parent: sprout.Application, mission: Mission):
         super().__init__(parent)
