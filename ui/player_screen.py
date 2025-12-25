@@ -12,20 +12,20 @@ class PlayerScreen(sprout.Screen):
 
         self.select_players_label = sprout.TextLabel(self, "select players:")
         self.select_players_label.font = sprout.Font("Sans Serif", 15)
-        self.select_players_label.place(x=600, y=50, anchor=sprout.N)
+        self.select_players_label.place(x=640, y=50, anchor=sprout.N)
 
         self.player_widgets = [PlayerWidget(self, player) for player in PLAYERS]
         for i, player_widget in enumerate(self.player_widgets):
-            # TODO: make player screen scrollable to support 10+ players
-            row = i // 5
-            column = i % 5
+            # TODO: make player screen scrollable to support 12+ players
+            row = i // 6
+            column = i % 6
             player_widget.place(
-                x=200 + column * 200, y=200 + row * 200, anchor=sprout.CENTRE
+                x=190 + column * 180, y=200 + row * 180, anchor=sprout.CENTRE
             )
 
         self.continue_button = sprout.TextLabel(self, "(continue)")
         self.continue_button.font = sprout.Font("Sans Serif", 15)
-        self.continue_button.place(x=600, y=620, anchor=sprout.S)
+        self.continue_button.place(x=640, y=720, anchor=sprout.S)
 
         for player_widget in self.player_widgets:
             player_widget.command = self.select_player

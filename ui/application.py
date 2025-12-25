@@ -8,7 +8,7 @@ from ui.player_screen import PlayerScreen
 class Application(sprout.Application):
 
     def __init__(self):
-        super().__init__("the crew v2", 1200, 720)
+        super().__init__("the crew v2", 1280, 800)
         self.mission = Mission()
 
         self.player_screen = PlayerScreen(self, self.mission)

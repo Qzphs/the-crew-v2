@@ -13,22 +13,28 @@ class MissionScreen(sprout.Screen):
         self.mission = mission
 
         self.reset_button = sprout.TextLabel(self, "(reset)")
+        self.reset_button.font = sprout.Font("Sans Serif", 15)
         self.reset_button.place(30, 30)
 
         self.add_single_button = sprout.TextLabel(self, "(add single)")
+        self.add_single_button.font = sprout.Font("Sans Serif", 15)
         self.add_single_button.place(180, 30)
 
         self.add_double_button = sprout.TextLabel(self, "(add double)")
+        self.add_double_button.font = sprout.Font("Sans Serif", 15)
         self.add_double_button.place(330, 30)
 
         self.add_special_button = sprout.TextLabel(self, "(add special)")
+        self.add_special_button.font = sprout.Font("Sans Serif", 15)
         self.add_special_button.place(480, 30)
 
         self.sort_tasks_button = sprout.TextLabel(self, "(sort tasks)")
+        self.sort_tasks_button.font = sprout.Font("Sans Serif", 15)
         self.sort_tasks_button.place(630, 30)
 
         self.change_players_button = sprout.TextLabel(self, "(change players)")
-        self.change_players_button.place(1170, 30, anchor=sprout.NE)
+        self.change_players_button.font = sprout.Font("Sans Serif", 15)
+        self.change_players_button.place(1230, 30, anchor=sprout.NE)
 
         self.task_widgets: list[TaskWidget] = []
 
@@ -48,7 +54,7 @@ class MissionScreen(sprout.Screen):
             task_widget.assignee_icon.command = self.cycle_assignee
             row = i // 3
             column = i % 3
-            task_widget.place(x=30 + column * 360, y=90 + row * 135)
+            task_widget.place(x=30 + column * 400, y=90 + row * 135)
 
     def reset(self, widget: sprout.TextLabel | None = None):
         self.mission.reset()
@@ -110,10 +116,10 @@ class CardWidget(sprout.TextLabel):
 
         if self.card.done:
             self.colour = "#4f4f4f"
-            self.font = sprout.Font("Sans Serif", 72, strikethrough=True)
+            self.font = sprout.Font("Sans Serif", 80, strikethrough=True)
         else:
             self.colour = self.card.suit.colour
-            self.font = sprout.Font("Sans Serif", 72, strikethrough=False)
+            self.font = sprout.Font("Sans Serif", 80, strikethrough=False)
 
         self.command = self.toggle_card
 
@@ -121,7 +127,7 @@ class CardWidget(sprout.TextLabel):
         self.card.done = not self.card.done
         if self.card.done:
             self.colour = "#4f4f4f"
-            self.font = sprout.Font("Sans Serif", 72, strikethrough=True)
+            self.font = sprout.Font("Sans Serif", 80, strikethrough=True)
         else:
             self.colour = self.card.suit.colour
-            self.font = sprout.Font("Sans Serif", 72, strikethrough=False)
+            self.font = sprout.Font("Sans Serif", 80, strikethrough=False)
