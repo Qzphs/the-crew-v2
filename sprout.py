@@ -1,9 +1,9 @@
-# Sprout v0.2 https://github.com/Qzphs/sprout
+# Sprout v0.2.1 https://github.com/Qzphs/sprout
 
 
 import tkinter
-import tkinter.font
 from typing import Callable
+import tkinter.font
 
 
 NW = tkinter.NW
@@ -81,11 +81,16 @@ class Widget:
         This can be accessed directly to hack in any changes not
         supported by Sprout.
         """
+        self.parent.children.append(self)
+
+    def pack(self, side: str = tkinter.LEFT):
+        self.base.pack(side=side)
 
     def place(self, x: int, y: int, anchor: str = NW):
         self.base.place(x=x, y=y, anchor=anchor)
 
     def destroy(self):
+        self.parent.children.remove(self)
         self.base.destroy()
 
 
@@ -96,6 +101,7 @@ class Container(Widget):
         super().__init__(parent)
         self.frame = self.base
         """The tkinter frame other widgets connect to."""
+        self.children: list[Widget] = []
 
 
 
@@ -136,6 +142,7 @@ class Screen(Container):
             height=parent.height,
         )
         self.frame = self.base
+        self.children: list[Widget] = []
 
 
 
@@ -171,12 +178,39 @@ class Entry(Widget):
         return self._entry.get()
 
 
+
 class Frame(Container):
     """Same as tkinter.Frame."""
 
     def __init__(self, parent: Container, width: int, height: int):
         super().__init__(parent)
         self.base.config(width=width, height=height)
+        self.base.bind("<Button-1>", self._on_click)
+        self.command: Callable[[Widget], None] | None = None
+
+    def _on_click(self, event: tkinter.Event):
+        if self.command is None:
+            return
+        self.command(self)
+
+    @property
+    def border_colour(self):
+        return self.base.cget("bg")
+
+    @border_colour.setter
+    def border_colour(self, border_colour: str | None):
+        if border_colour is None:
+            self.base.config(bg=self.parent.base.cget("bg"))
+        else:
+            self.base.config(bg=border_colour)
+
+    @property
+    def border_width(self):
+        return self.base.cget("bd")
+
+    @border_width.setter
+    def border_width(self, border_width: int):
+        self.base.config(bd=border_width)
 
 
 
@@ -195,6 +229,25 @@ class ImageLabel(Widget):
         if self.command is None:
             return
         self.command(self)
+
+    @property
+    def border_colour(self):
+        return self.base.cget("bg")
+
+    @border_colour.setter
+    def border_colour(self, border_colour: str | None):
+        if border_colour is None:
+            self.base.config(bg=self.parent.base.cget("bg"))
+        else:
+            self.base.config(bg=border_colour)
+
+    @property
+    def border_width(self):
+        return self.base.cget("bd")
+
+    @border_width.setter
+    def border_width(self, border_width: int):
+        self.base.config(bd=border_width)
 
     @property
     def image(self):
