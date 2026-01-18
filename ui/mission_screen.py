@@ -1,41 +1,42 @@
 from game.card import Card
 from game.mission import Mission
 from game.task import Task
-import sprout
+
+import sprout as s
 
 
-class MissionScreen(sprout.Screen):
+class MissionScreen(s.Screen):
 
-    def __init__(self, parent: sprout.Application, mission: Mission):
+    def __init__(self, parent: s.Application, mission: Mission):
         super().__init__(parent)
         self.mission = mission
 
         self.rearrange_mode = False
         self.selected_task_widget: TaskWidget | None = None
 
-        self.reset_button = sprout.TextLabel(self, "(reset)")
-        self.reset_button.command = self.reset
+        self.reset_button = s.TextLabel(self, "(reset)")
+        self.reset_button.on_click = self.reset
         self.reset_button.place(30, 30)
 
-        self.add_single_button = sprout.TextLabel(self, "(add single)")
-        self.add_single_button.command = self.add_single
+        self.add_single_button = s.TextLabel(self, "(add single)")
+        self.add_single_button.on_click = self.add_single
         self.add_single_button.place(180, 30)
 
-        self.add_double_button = sprout.TextLabel(self, "(add double)")
-        self.add_double_button.command = self.add_double
+        self.add_double_button = s.TextLabel(self, "(add double)")
+        self.add_double_button.on_click = self.add_double
         self.add_double_button.place(330, 30)
 
-        self.add_special_button = sprout.TextLabel(self, "(add special)")
-        self.add_special_button.command = self.add_special
+        self.add_special_button = s.TextLabel(self, "(add special)")
+        self.add_special_button.on_click = self.add_special
         self.add_special_button.place(480, 30)
 
-        self.rearrange_tasks_button = sprout.TextLabel(self, "(rearrange tasks)")
-        self.rearrange_tasks_button.command = self.rearrange_tasks
+        self.rearrange_tasks_button = s.TextLabel(self, "(rearrange tasks)")
+        self.rearrange_tasks_button.on_click = self.rearrange_tasks
         self.rearrange_tasks_button.place(630, 30)
 
-        self.change_players_button = sprout.TextLabel(self, "(change players)")
-        # Command to be set by application
-        self.change_players_button.place(1230, 30, anchor=sprout.NE)
+        self.change_players_button = s.TextLabel(self, "(change players)")
+        # on_click to be set by application
+        self.change_players_button.place(1230, 30, anchor=s.NE)
 
         MAX_TASK_COUNT = 15
         self.task_widgets = [TaskWidget(self) for _ in range(MAX_TASK_COUNT)]
@@ -45,9 +46,9 @@ class MissionScreen(sprout.Screen):
             task_widget.place(x=30 + column * 400, y=90 + row * 135)
 
         for widget in self.children:
-            if not isinstance(widget, sprout.TextLabel):
+            if not isinstance(widget, s.TextLabel):
                 continue
-            widget.font = sprout.Font("Sans Serif", 15)
+            widget.font = s.Font("Sans Serif", 15)
 
     def _update(self):
         if self.rearrange_mode:
@@ -68,21 +69,21 @@ class MissionScreen(sprout.Screen):
 
     def _update_commands(self, task_widget: "TaskWidget"):
         if not self.rearrange_mode:
-            task_widget.inner1.command = None
-            task_widget.inner2.command = None
+            task_widget.inner1.on_click = None
+            task_widget.inner2.on_click = None
             if task_widget.assignee_icon is not None:
-                task_widget.assignee_icon.command = self.cycle_assignee
+                task_widget.assignee_icon.on_click = self.cycle_assignee
             for card_widget in task_widget.card_widgets:
-                card_widget.command = card_widget.toggle_card
+                card_widget.on_click = card_widget.toggle_card
         else:
-            task_widget.inner1.command = self.select_task
-            task_widget.inner2.command = self.select_task
+            task_widget.inner1.on_click = self.select_task
+            task_widget.inner2.on_click = self.select_task
             if task_widget.assignee_icon is not None:
-                task_widget.assignee_icon.command = self.select_task
+                task_widget.assignee_icon.on_click = self.select_task
             for card_widget in task_widget.card_widgets:
-                card_widget.command = self.select_task
+                card_widget.on_click = self.select_task
 
-    def reset(self, source: sprout.TextLabel | None = None):
+    def reset(self, source: s.TextLabel | None = None):
         self.mission.reset()
         self.rearrange_mode = False
         self.selected_task_widget = None
@@ -90,7 +91,7 @@ class MissionScreen(sprout.Screen):
             task_widget.task = None
         self._update()
 
-    def add_single(self, source: sprout.TextLabel):
+    def add_single(self, source: s.TextLabel):
         task_widget = next(
             (widget for widget in self.task_widgets if widget.task is None), None
         )
@@ -101,7 +102,7 @@ class MissionScreen(sprout.Screen):
         self._update_border(task_widget)
         self._update_commands(task_widget)
 
-    def add_double(self, source: sprout.TextLabel):
+    def add_double(self, source: s.TextLabel):
         task_widget = next(
             (widget for widget in self.task_widgets if widget.task is None), None
         )
@@ -112,7 +113,7 @@ class MissionScreen(sprout.Screen):
         self._update_border(task_widget)
         self._update_commands(task_widget)
 
-    def add_special(self, source: sprout.TextLabel):
+    def add_special(self, source: s.TextLabel):
         task_widget = next(
             (widget for widget in self.task_widgets if widget.task is None), None
         )
@@ -123,12 +124,12 @@ class MissionScreen(sprout.Screen):
         self._update_border(task_widget)
         self._update_commands(task_widget)
 
-    def rearrange_tasks(self, source: sprout.TextLabel):
+    def rearrange_tasks(self, source: s.TextLabel):
         self.rearrange_mode = not self.rearrange_mode
         self.selected_task_widget = None
         self._update()
 
-    def select_task(self, source: sprout.Widget):
+    def select_task(self, source: s.Widget):
         """
         Select a task to swap.
 
@@ -161,21 +162,21 @@ class MissionScreen(sprout.Screen):
         index += 1
         index %= len(self.mission.players)
         source.task.assignee = self.mission.players[index]
-        source.image = sprout.Image.from_file(source.task.assignee.name).subsample(2)
+        source.image = s.Image.from_file(source.task.assignee.name).subsample(2)
 
 
-class TaskWidget(sprout.Frame):
+class TaskWidget(s.Frame):
 
-    def __init__(self, parent: sprout.Container):
+    def __init__(self, parent: s.Container):
         super().__init__(parent, 360, 120)
         self._task: Task | None = None
         self.border_width = 5
 
         # So that border displays correctly
-        self.inner1 = sprout.Frame(self, 350, 110)
+        self.inner1 = s.Frame(self, 350, 110)
         self.inner1.place(0, 0)
 
-        self.inner2 = sprout.Frame(self.inner1, 0, 0)
+        self.inner2 = s.Frame(self.inner1, 0, 0)
         self.inner2.place(0, 0)
 
         self.assignee_icon: AssigneeWidget | None = None
@@ -210,36 +211,36 @@ class TaskWidget(sprout.Frame):
         self.border_colour = None
 
 
-class AssigneeWidget(sprout.ImageLabel):
+class AssigneeWidget(s.ImageLabel):
 
-    def __init__(self, parent: sprout.Container, task: Task):
+    def __init__(self, parent: s.Container, task: Task):
         super().__init__(
             parent,
-            sprout.Image.from_file(task.assignee.name).subsample(2),
+            s.Image.from_file(task.assignee.name).subsample(2),
         )
         self.task = task
 
 
-class CardWidget(sprout.TextLabel):
+class CardWidget(s.TextLabel):
 
-    def __init__(self, parent: sprout.Container, card: Card):
+    def __init__(self, parent: s.Container, card: Card):
         super().__init__(parent, str(card))
         self.card = card
 
         if self.card.done:
             self.colour = "#4f4f4f"
-            self.font = sprout.Font("Sans Serif", 80, strikethrough=True)
+            self.font = s.Font("Sans Serif", 80, strikethrough=True)
         else:
             self.colour = self.card.suit.colour
-            self.font = sprout.Font("Sans Serif", 80, strikethrough=False)
+            self.font = s.Font("Sans Serif", 80, strikethrough=False)
 
-        self.command = self.toggle_card
+        self.on_click = self.toggle_card
 
     def toggle_card(self, source: "CardWidget"):
         self.card.done = not self.card.done
         if self.card.done:
             self.colour = "#4f4f4f"
-            self.font = sprout.Font("Sans Serif", 80, strikethrough=True)
+            self.font = s.Font("Sans Serif", 80, strikethrough=True)
         else:
             self.colour = self.card.suit.colour
-            self.font = sprout.Font("Sans Serif", 80, strikethrough=False)
+            self.font = s.Font("Sans Serif", 80, strikethrough=False)
