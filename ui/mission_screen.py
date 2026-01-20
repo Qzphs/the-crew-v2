@@ -61,11 +61,11 @@ class MissionScreen(s.Screen):
 
     def _update_border(self, task_widget: "TaskWidget"):
         if not self.rearrange_mode:
-            task_widget.border_colour = None
+            task_widget.background_colour = None
         elif task_widget == self.selected_task_widget:
-            task_widget.border_colour = "#f18519"
+            task_widget.background_colour = "#f18519"
         else:
-            task_widget.border_colour = "#d1d1d1"
+            task_widget.background_colour = "#d1d1d1"
 
     def _update_commands(self, task_widget: "TaskWidget"):
         if not self.rearrange_mode:
@@ -201,14 +201,13 @@ class TaskWidget(s.Frame):
         for card_widget in self.card_widgets:
             card_widget.pack()
 
-    def mark_available(self):
-        self.border_colour = "#d1d1d1"
+    @property
+    def border_colour(self):
+        return self.background_colour
 
-    def mark_selected(self):
-        self.border_colour = "#f18519"
-
-    def hide_border(self):
-        self.border_colour = None
+    @border_colour.setter
+    def border_colour(self, colour: str | None):
+        self.background_colour = colour
 
 
 class AssigneeWidget(s.ImageLabel):
